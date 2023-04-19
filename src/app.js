@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { MongoClient } from "mongodb";
 import joi from "joi"
+import bcrypt from "bcrypt"
 
 const app = express();
 
@@ -31,9 +32,21 @@ app.post("/sign-up", async (req, res) => {
     }
 
     try {
+        const user = await db.collection("users").findOne({ email })
+        if (user) return res.status(409).send("Usuario com email ja cadastrado")
+
+        const encryptedPassword = bcrypt.hashSync(password, 10);
+
+        await db.collection("users").insertOne({
+            name,
+            email,
+            password: encryptedPassword
+        })
+
+        res.sendStatus(201)
 
     } catch (err) {
-
+        return res.status(500).send(err.message);
     }
 })
 
