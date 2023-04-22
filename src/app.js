@@ -5,6 +5,7 @@ import joi from "joi"
 import bcrypt from "bcrypt"
 import dotenv from "dotenv"
 import { v4 as uuid } from 'uuid';
+import dayjs from "dayjs";
 
 const app = express();
 
@@ -75,7 +76,7 @@ app.post("/sign-in", async (req, res) => {
         const token = uuid();
 
         await db.collection("sessions").insertOne({ userId: user._id, token })
-        res.send(token)
+        res.send({ token, name: user.name })
     }
     else {
         res.sendStatus(401)
@@ -115,7 +116,8 @@ app.post("/nova-transacao/:type", async (req, res) => {
             const transaction = await db.collection("transactions").insertOne({
                 userId: user._id,
                 value: req.body.value,
-                type: req.params.type
+                type: req.params.type,
+                date: dayjs(Date.now()).format('DD/MM')
             })
         }
 
@@ -126,5 +128,26 @@ app.post("/nova-transacao/:type", async (req, res) => {
     }
 })
 
+app.get("/transacoes", async (req, res) => {
+    const { authorization } = req.headers;
+    const token = authorization?.replace('Bearer ', '');
+
+    try {
+        const session = await db.collection("sessions").findOne({ token });
+        if (!session) return res.status(401).send("Sessão não encontrada");
+
+        const user = await db.collection("users").findOne({ _id: session.userId })
+        if (!user) return res.status(401).send("Usuario não encontrado")
+
+        const transacoes = await db.collection("transactions").find({ userId: session.userId }).toArray()
+        console.log(transacoes)
+        res.status(200).send(transacoes)
+
+    } catch (err) {
+        return res.status(500).send(err.message);
+    }
+
+
+})
 const PORT = 5000;
 app.listen(PORT, () => console.log(`App listening in port ${PORT}`));
