@@ -82,5 +82,49 @@ app.post("/sign-in", async (req, res) => {
     }
 })
 
+app.post("/nova-transacao/:type", async (req, res) => {
+    const { authorization } = req.headers;
+    const token = authorization?.replace('Bearer ', '');
+
+    console.log(req.params.type)
+    console.log(authorization)
+    console.log(token)
+
+    if (!token) return res.sendStatus(401)
+
+    const operationSchema = joi.object({
+        value: joi.number().positive().precision(2).required(),
+        description: joi.string().required()
+    })
+
+    const validation = operationSchema.validate(req.body, { abortEarly: false })
+    if (validation.error) {
+        const errors = validation.error.details.map((detail) => detail.message);
+        return res.status(422).send(errors);
+    }
+
+    try {
+        const session = await db.collection("sessions").findOne({ token });
+        if (!session) return res.status(401).send("Sessão não encontrada");
+
+        const user = await db.collection("users").findOne({ _id: session.userId })
+
+        if (!user) return res.status(401).send("Usuario não encontrado")
+
+        if (user) {
+            const transaction = await db.collection("transactions").insertOne({
+                userId: user._id,
+                value: req.body.value,
+                type: req.params.type
+            })
+        }
+
+        res.sendStatus(201)
+
+    } catch (err) {
+        return res.status(500).send(err.message);
+    }
+})
+
 const PORT = 5000;
 app.listen(PORT, () => console.log(`App listening in port ${PORT}`));
