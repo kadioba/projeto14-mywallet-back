@@ -117,7 +117,8 @@ app.post("/nova-transacao/:type", async (req, res) => {
                 userId: user._id,
                 value: req.body.value,
                 type: req.params.type,
-                date: dayjs(Date.now()).format('DD/MM')
+                date: dayjs(Date.now()).format('DD/MM'),
+                description: req.body.description
             })
         }
 
