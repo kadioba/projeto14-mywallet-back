@@ -87,10 +87,6 @@ app.post("/nova-transacao/:type", async (req, res) => {
     const { authorization } = req.headers;
     const token = authorization?.replace('Bearer ', '');
 
-    console.log(req.params.type)
-    console.log(authorization)
-    console.log(token)
-
     if (!token) return res.sendStatus(401)
 
     const operationSchema = joi.object({
