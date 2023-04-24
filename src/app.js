@@ -110,11 +110,19 @@ app.post("/nova-transacao/:type", async (req, res) => {
     const { authorization } = req.headers;
     const token = authorization?.replace('Bearer ', '');
 
-    if (!token) return res.sendStatus(401)
+    if (!token) return res.status(401).send("Token de usuario necessario para realizar a operação")
 
     const operationSchema = joi.object({
-        value: joi.number().positive().precision(2).required(),
-        description: joi.string().required()
+        value: joi.number().positive().precision(2).required().messages({
+            'number.base': 'O valor deve ser um número',
+            'number.positive': 'O valor deve ser maior que zero',
+            'number.precision': 'O valor deve ter no máximo 2 casas decimais',
+            'any.required': 'O valor é obrigatório'
+        }),
+        description: joi.string().required().messages({
+            'string.empty': 'A descrição é obrigatória',
+            'any.required': 'A descrição é obrigatória'
+        })
     })
 
     const validation = operationSchema.validate(req.body, { abortEarly: false })
@@ -169,5 +177,20 @@ app.get("/transacoes", async (req, res) => {
 
 
 })
+
+app.post("/logout", async (req, res) => {
+    const { authorization } = req.headers;
+    const token = authorization?.replace('Bearer ', '');
+
+    try {
+        await db.collection("sessions").deleteOne({ token });
+        res.sendStatus(200)
+
+    } catch (err) {
+
+        return res.status(500).send(err.message);
+    }
+})
+
 const PORT = 5000;
 app.listen(PORT, () => console.log(`App listening in port ${PORT}`));
