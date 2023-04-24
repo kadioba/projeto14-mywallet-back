@@ -192,5 +192,4 @@ app.post("/logout", async (req, res) => {
     }
 })
 
-const PORT = 5000;
-app.listen(PORT, () => console.log(`App listening in port ${PORT}`));
+app.listen(process.env.PORT, () => console.log(`App listening in port ${process.env.PORT}`));
