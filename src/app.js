@@ -69,28 +69,40 @@ app.post("/sign-in", async (req, res) => {
     const { email, password } = req.body;
 
     const loginSchema = joi.object({
-        email: joi.string().required().email(),
-        password: joi.string().required().min(3)
+        email: joi.string().required().email().messages({
+            'string.email': 'O email informado não é válido',
+            'any.required': 'O email é obrigatório'
+        }),
+        password: joi.string().required().min(3).messages({
+            'string.min': 'A senha deve ter pelo menos {#limit} caracteres',
+            'any.required': 'A senha é obrigatória'
+        })
     })
 
-    const validation = loginSchema.validate(req.body, { abortEarly: false })
-    if (validation.error) {
-        const errors = validation.error.details.map((detail) => detail.message);
-        return res.status(422).send(errors);
+    try {
+        const validation = loginSchema.validate(req.body, { abortEarly: false })
+        if (validation.error) {
+            const errors = validation.error.details.map((detail) => detail.message);
+            return res.status(422).send(errors);
+        }
+
+        const user = await db.collection("users").findOne({ email });
+
+        if (!user) return res.status(404).send("Email não cadastrado")
+
+        if (user && bcrypt.compareSync(password, user.password)) {
+            const token = uuid();
+
+            await db.collection("sessions").insertOne({ userId: user._id, token })
+            res.status(200).send({ token, name: user.name })
+        }
+
+        else {
+            res.status(401).send("Senha incorreta")
+        }
     }
-
-    const user = await db.collection("users").findOne({ email });
-
-    if (!user) return res.sendStatus(404)
-
-    if (user && bcrypt.compareSync(password, user.password)) {
-        const token = uuid();
-
-        await db.collection("sessions").insertOne({ userId: user._id, token })
-        res.send({ token, name: user.name })
-    }
-    else {
-        res.sendStatus(401)
+    catch (err) {
+        return res.status(500).send(err.message);
     }
 })
 
