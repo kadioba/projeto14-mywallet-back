@@ -2,6 +2,10 @@
 
 A versão demo para testes da API do DrivenPass pode acessada em https://my-wallet-rrtg.onrender.com
 
+O repositório do front-end do projeto pode ser acessado em https://github.com/kadioba/projeto14-mywallet-front
+
+A versão live do projeto compleo pode ser acessada em https://projeto14-mywallet-front-oh3ti3zin-kadioba.vercel.app
+
 ## Descrição
 
 O backend do MyWallet é uma API REST desenvolvida para fornecer funcionalidades de gerenciamento de finanças pessoais, permitindo que os usuários registrem e recuperem transações financeiras. Ele é projetado para ser seguro e eficiente, fornecendo uma interface para a aplicação frontend acessar e interagir com o banco de dados MongoDB.
